@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.delete("Book","pages>?",new String[] {"500"});
+                db.delete("Book", "pages>?", new String[]{"500"});
             }
         });
 
@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 Cursor cursor = db.query("Book",null,null,null,null,null,null);
                 if (cursor.moveToFirst()){
                     do{
+                        //遍历Cursor对象，取出数据并打印。只有一条，页数大于500的一条已经被删除
                         String name = cursor.getString(cursor.getColumnIndex("name"));
                         String author = cursor.getString(cursor.getColumnIndex("author"));
                         int pages = cursor.getInt(cursor.getColumnIndex("pages"));
@@ -91,6 +92,32 @@ public class MainActivity extends AppCompatActivity {
                     while (cursor.moveToNext());
                 }
                 cursor.close();
+            }
+        });
+
+        Button replaceData = (Button) findViewById(R.id.replace_data);
+        replaceData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                db.beginTransaction();//开始事务
+                try{
+                    db.delete("Book",null,null);
+                    if (true){
+                        throw new NullPointerException();//在这里手动抛出一个异常，让事务失败
+                    }
+                    ContentValues values = new ContentValues();
+                    values.put("name","Game of Thrones");
+                    values.put("author","George Martin");
+                    values.put("pages",720);
+                    values.put("price",20.85);
+                    db.insert("Book", null, values);
+                    db.setTransactionSuccessful();//事务已经成功执行
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    db.endTransaction();
+                }
             }
         });
     }
