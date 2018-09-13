@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
                 values.put("author","Dan Brown");
                 values.put("pages",510);
                 values.put("price",19.95);
-                db.insert("Boook",null,values);//插入第二条数据
+                db.insert("Boook", null, values);//插入第二条数据
             }
         });
 
@@ -57,6 +57,15 @@ public class MainActivity extends AppCompatActivity {
                 ContentValues values = new ContentValues();
                 values.put("price",10.99);
                 db.update("Book",values,"name=?",new String[]{"The Da Vinci Code"});
+            }
+        });
+
+        Button deleteButon = (Button) findViewById(R.id.delete_data);
+        deleteButon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                db.delete("Book","pages>?",new String[] {"500"});
             }
         });
     }
