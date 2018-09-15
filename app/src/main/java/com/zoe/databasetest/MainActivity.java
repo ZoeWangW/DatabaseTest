@@ -3,51 +3,55 @@ package com.zoe.databasetest;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MyDatabaseHelper dbHelper;
+    private String newId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        dbHelper = new MyDatabaseHelper(this,"BookStore.db",null,2);
-        Button createDatabase = (Button) findViewById(R.id.create_database);
-        createDatabase.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dbHelper.getWritableDatabase();
-            }
-        });
-
         Button addData = (Button) findViewById(R.id.add_data);
         addData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                Uri uri = Uri.parse("content://com.zoe.databasetest.provider/book");
                 ContentValues values = new ContentValues();
-                values.put("name","The Da Vinci Code");//开始组装第一条数据
-                values.put("author","Dan Brown");
-                values.put("pages",454);
-                values.put("price",16.95);
-                db.insert("Boook", null, values);//插入第一条数据
-                values.clear();
-                values.put("name","The Lost Symbol");//开始组装第二条数据
-                values.put("author","Dan Brown");
-                values.put("pages",510);
-                values.put("price",19.95);
-                db.insert("Boook", null, values);//插入第二条数据
+                values.put("name", "A Clash of Kings");
+                values.put("author", "George Martin");
+                values.put("pages", 1040);
+                values.put("price", 22.85);
+                Uri newUri = getContentResolver().insert(uri, values);
+                newId = newUri.getPathSegments().get(1);
+            }
+        });
+
+        Button queryData = (Button) findViewById(R.id.query_data);
+        queryData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = Uri.parse("content://com.zoe.databasetest.provider/book");
+                Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        String name = cursor.getString(cursor.getColumnIndex("name"));
+                        String author = cursor.getString(cursor.getColumnIndex("author"));
+                        int pages = cursor.getInt(cursor.getColumnIndex("pages"));
+                        double price = cursor.getDouble(cursor.getColumnIndex("price"));
+                        Log.d("MainActivity", "book name is " + name);
+                        Log.d("MainActivity", "book author is " + author);
+                        Log.d("MainActivity", "book pages is " + pages);
+                        Log.d("MainActivity", "book price is " + price);
+                    }
+                    cursor.close();
+                }
             }
         });
 
@@ -55,70 +59,23 @@ public class MainActivity extends AppCompatActivity {
         updateData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                Uri uri = Uri.parse("content://com.zoe.databasetest.provider/book/" + newId);
                 ContentValues values = new ContentValues();
-                values.put("price",10.99);
-                db.update("Book", values, "name=?", new String[]{"The Da Vinci Code"});
+                values.put("name", "A Storm of Swords");
+                values.put("pages", 1216);
+                values.put("price", 24.05);
             }
         });
 
-        Button deleteButon = (Button) findViewById(R.id.delete_data);
-        deleteButon.setOnClickListener(new View.OnClickListener() {
+        Button deleteData = (Button) findViewById(R.id.delete_data);
+        deleteData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.delete("Book", "pages>?", new String[]{"500"});
-            }
-        });
-
-        Button queryButton = (Button) findViewById(R.id.query_data);
-        queryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                Cursor cursor = db.query("Book",null,null,null,null,null,null);
-                if (cursor.moveToFirst()){
-                    do{
-                        //遍历Cursor对象，取出数据并打印。只有一条，页数大于500的一条已经被删除
-                        String name = cursor.getString(cursor.getColumnIndex("name"));
-                        String author = cursor.getString(cursor.getColumnIndex("author"));
-                        int pages = cursor.getInt(cursor.getColumnIndex("pages"));
-                        double price = cursor.getDouble(cursor.getColumnIndex("price"));
-                        Log.d("MainActivity","book name is "+ name);
-                        Log.d("MainActivity","book author is "+ author);
-                        Log.d("MainActivity","book pages is "+ pages);
-                        Log.d("MainActivity","book price is "+ price);
-                    }
-                    while (cursor.moveToNext());
-                }
-                cursor.close();
-            }
-        });
-
-        Button replaceData = (Button) findViewById(R.id.replace_data);
-        replaceData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.beginTransaction();//开始事务
-                try{
-                    db.delete("Book",null,null);
-                    if (true){
-                        throw new NullPointerException();//在这里手动抛出一个异常，让事务失败
-                    }
-                    ContentValues values = new ContentValues();
-                    values.put("name","Game of Thrones");
-                    values.put("author","George Martin");
-                    values.put("pages",720);
-                    values.put("price",20.85);
-                    db.insert("Book", null, values);
-                    db.setTransactionSuccessful();//事务已经成功执行
-                }catch (Exception e){
-                    e.printStackTrace();
-                }finally {
-                    db.endTransaction();
-                }
+                Uri uri = Uri.parse("content://com.zoe.databasetest.provider/book." + newId);
+                getContentResolver().delete(uri, null, null);
             }
         });
     }
+
+
 }

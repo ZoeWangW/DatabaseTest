@@ -18,6 +18,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:authorities="com.zoe.databasetest.DatabaseProvider"
+            android:name="com.zoe.databasetest.DatabaseProvider"
+            android:exported="true">
+        </provider>
+
     </application>
 
 </manifest>
